@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Обмен валют</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<header class="page-header">
+    <div class="container header-content">
+        <a class="logo" href="./" aria-label="Обмен валют — главная">
+            <span class="logo-mark">⇄</span>
+            <span>Обмен валют</span>
+        </a>
+    </div>
+</header>
+
+<main class="container">
+    <section class="intro" aria-labelledby="page-title">
+        <p class="eyebrow">REST API</p>
+        <h1 id="page-title">Валюты</h1>
+        <p>Список валют.</p>
+    </section>
+
+    <section class="currency-card" aria-labelledby="currency-list-title">
+        <div class="card-header">
+            <h2 id="currency-list-title">Валюты</h2>
+            <div class="button-group">
+            <button class="button button-primary" id="open-dialog-button" type="button">
+                Добавить валюту
+            </button>
+            <button class="button button-secondary" id="reload-button" type="button">
+                Обновить
+            </button>
+            </div>
+        </div>
+
+        <p class="status" id="status" aria-live="polite">Загрузка списка валют…</p>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                <tr>
+                    <th scope="col">Код</th>
+                    <th scope="col">Название</th>
+                    <th scope="col">Символ</th>
+                </tr>
+                </thead>
+                <tbody id="currencies-table-body"></tbody>
+            </table>
+        </div>
+    </section>
+
+    <div class="exchange-grid">
+    <section class="currency-card exchange-rate-card" aria-labelledby="exchange-rate-list-title">
+        <div class="card-header">
+            <h2 id="exchange-rate-list-title">Обменные курсы</h2>
+            <div class="button-group">
+                <button class="button button-primary" id="open-exchange-rate-dialog-button" type="button">
+                    Добавить пару
+                </button>
+                <button class="button button-secondary" id="reload-exchange-rates-button" type="button">
+                    Обновить
+                </button>
+            </div>
+        </div>
+
+        <form class="search-form" id="exchange-rate-search-form">
+            <label for="base-currency-code">
+                Базовая валюта
+                <input id="base-currency-code" name="baseCurrencyCode" type="text" placeholder="USD" maxlength="3" required>
+            </label>
+            <label for="target-currency-code">
+                Целевая валюта
+                <input id="target-currency-code" name="targetCurrencyCode" type="text" placeholder="RUB" maxlength="3" required>
+            </label>
+            <button class="button button-secondary" type="submit">Найти курс</button>
+            <button class="text-button" id="reset-exchange-rate-search-button" type="button">Показать все</button>
+        </form>
+
+        <p class="status" id="exchange-rates-status" aria-live="polite">Загрузка списка обменных курсов…</p>
+
+        <div class="table-wrapper">
+            <table class="exchange-rate-table">
+                <thead>
+                <tr>
+                    <th scope="col">Базовая валюта</th>
+                    <th scope="col">Целевая валюта</th>
+                    <th scope="col">Курс</th>
+                </tr>
+                </thead>
+                <tbody id="exchange-rates-table-body"></tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="currency-card exchange-card" aria-labelledby="exchange-title">
+        <div class="card-header">
+            <h2 id="exchange-title">Обмен валюты</h2>
+        </div>
+
+        <form class="exchange-form" id="exchange-form">
+            <label for="exchange-from">
+                Из валюты
+                <input id="exchange-from" name="from" type="text" placeholder="USD" maxlength="3" required>
+            </label>
+            <label for="exchange-to">
+                В валюту
+                <input id="exchange-to" name="to" type="text" placeholder="RUB" maxlength="3" required>
+            </label>
+            <label for="exchange-amount">
+                Сумма
+                <input id="exchange-amount" name="amount" type="number" min="0" step="any" placeholder="100" required>
+            </label>
+            <button class="button button-primary" id="exchange-submit-button" type="submit">Обменять</button>
+        </form>
+
+        <p class="form-error exchange-error" id="exchange-error" role="alert"></p>
+        <div class="exchange-result" id="exchange-result" hidden>
+            <p class="result-label">Результат обмена</p>
+            <p class="result-value" id="exchange-result-value"></p>
+            <p class="result-rate" id="exchange-result-rate"></p>
+        </div>
+        <p class="exchange-hint">Курс подбирается автоматически: прямой, обратный или через USD.</p>
+    </section>
+    </div>
+</main>
+
+<dialog id="currency-dialog" aria-labelledby="dialog-title">
+    <form id="currency-form">
+        <div class="dialog-header">
+            <h2 id="dialog-title">Новая валюта</h2>
+            <button class="close-button" id="close-dialog-button" type="button" aria-label="Закрыть">×</button>
+        </div>
+
+        <label for="name">
+            Полное название
+            <input id="name" name="name" type="text" placeholder="Euro" required>
+        </label>
+
+        <label for="code">
+            Код валюты
+            <input id="code" name="code" type="text" placeholder="EUR" maxlength="3" required>
+        </label>
+
+        <label for="sign">
+            Символ
+            <input id="sign" name="sign" type="text" placeholder="€" required>
+        </label>
+
+        <p class="form-error" id="form-error" role="alert"></p>
+
+        <div class="dialog-actions">
+            <button class="button button-secondary" id="cancel-button" type="button">Отмена</button>
+            <button class="button button-primary" id="submit-button" type="submit">Сохранить</button>
+        </div>
+    </form>
+</dialog>
+
+<dialog id="exchange-rate-dialog" aria-labelledby="exchange-rate-dialog-title">
+    <form id="exchange-rate-form">
+        <div class="dialog-header">
+            <h2 id="exchange-rate-dialog-title">Новая обменная пара</h2>
+            <button class="close-button" id="close-exchange-rate-dialog-button" type="button" aria-label="Закрыть">×</button>
+        </div>
+
+        <label for="new-base-currency-code">
+            Код базовой валюты
+            <input id="new-base-currency-code" name="baseCurrencyCode" type="text" placeholder="USD" maxlength="3" required>
+        </label>
+
+        <label for="new-target-currency-code">
+            Код целевой валюты
+            <input id="new-target-currency-code" name="targetCurrencyCode" type="text" placeholder="RUB" maxlength="3" required>
+        </label>
+
+        <label for="rate">
+            Курс
+            <input id="rate" name="rate" type="number" min="0" step="any" placeholder="90.50" required>
+        </label>
+
+        <p class="form-error" id="exchange-rate-form-error" role="alert"></p>
+
+        <div class="dialog-actions">
+            <button class="button button-secondary" id="cancel-exchange-rate-button" type="button">Отмена</button>
+            <button class="button button-primary" id="submit-exchange-rate-button" type="submit">Сохранить</button>
+        </div>
+    </form>
+</dialog>
+
+<dialog id="edit-exchange-rate-dialog" aria-labelledby="edit-exchange-rate-dialog-title">
+    <form id="edit-exchange-rate-form">
+        <div class="dialog-header">
+            <h2 id="edit-exchange-rate-dialog-title">Edit exchange rate</h2>
+            <button class="close-button" id="close-edit-exchange-rate-dialog-button" type="button" aria-label="Close">×</button>
+        </div>
+        <p class="edit-pair" id="edit-exchange-rate-pair"></p>
+        <label for="edit-rate">New rate
+            <input id="edit-rate" name="rate" type="number" min="0" step="any" required>
+        </label>
+        <p class="form-error" id="edit-exchange-rate-form-error" role="alert"></p>
+        <div class="dialog-actions">
+            <button class="button button-secondary" id="cancel-edit-exchange-rate-button" type="button">Cancel</button>
+            <button class="button button-primary" id="submit-edit-exchange-rate-button" type="submit">Save</button>
+        </div>
+    </form>
+</dialog>
+
+<script src="js/app.js"></script>
+</body>
+</html>

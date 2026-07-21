@@ -1,0 +1,5 @@
+database.url=jdbc:postgresql://localhost:5432/currency_exchange
+database.username=currency_exchange_user
+database.password=change_me
+database.driver-class-name=org.postgresql.Driver
+database.pool.maximum-size=10

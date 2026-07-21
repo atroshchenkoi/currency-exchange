@@ -1,0 +1,46 @@
+@baseUrl = http://localhost:8080/currency-exchange
+
+### Получить все валюты
+GET {{baseUrl}}/currencies
+Accept: application/json
+
+### Получить валюту по коду
+GET {{baseUrl}}/currency/EUR
+Accept: application/json
+
+### Создать валюту
+POST {{baseUrl}}/currencies
+Content-Type: application/x-www-form-urlencoded
+Accept: application/json
+
+name=Euro&code=EUR&sign=€
+
+### Получить все обменные курсы
+GET {{baseUrl}}/exchangeRates
+Accept: application/json
+
+### Получить обменный курс валютной пары
+GET {{baseUrl}}/exchangeRate/USDRUB
+Accept: application/json
+
+### Создать обменный курс
+POST {{baseUrl}}/exchangeRates
+Content-Type: application/x-www-form-urlencoded
+Accept: application/json
+
+baseCurrencyCode=USD&targetCurrencyCode=EUR&rate=0.99
+
+### Обновить обменный курс
+PATCH {{baseUrl}}/exchangeRate/USDRUB
+Content-Type: application/x-www-form-urlencoded
+Accept: application/json
+
+rate=80
+
+### Удалить обменный курс
+DELETE {{baseUrl}}/exchangeRate/USDEUR
+Accept: application/json
+
+### Рассчитать обмен валюты
+GET {{baseUrl}}/exchange?from=UST&to=RUB&amount=10
+Accept: application/json
