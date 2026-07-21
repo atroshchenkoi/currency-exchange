@@ -45,6 +45,7 @@ public class JdbcExchangeRateDao implements ExchangeRateDao {
             SET rate = ?
             WHERE base_currency_id = (SELECT id FROM currencies WHERE code = ?)
               AND target_currency_id = (SELECT id FROM currencies WHERE code = ?)
+            RETURNING id, base_currency_id, target_currency_id, rate
             """;
 
     private static final String DELETE_SQL = """
@@ -141,19 +142,15 @@ public class JdbcExchangeRateDao implements ExchangeRateDao {
 
     @Override
     public ExchangeRate updateRate(String baseCurrencyCode, String targetCurrencyCode, BigDecimal rate) {
-        try (Connection connection = dataSource.getConnection()) {
-            connection.setAutoCommit(false);
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(UPDATE_RATE_SQL)) {
 
-            try {
-                int updatedRows;
-                try (PreparedStatement statement = connection.prepareStatement(UPDATE_RATE_SQL)) {
-                    statement.setBigDecimal(1, rate);
-                    statement.setString(2, baseCurrencyCode);
-                    statement.setString(3, targetCurrencyCode);
-                    updatedRows = statement.executeUpdate();
-                }
+            statement.setBigDecimal(1, rate);
+            statement.setString(2, baseCurrencyCode);
+            statement.setString(3, targetCurrencyCode);
 
-                if (updatedRows == 0) {
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (!resultSet.next()) {
                     LOGGER.debug(
                             "Cannot update exchange rate because currency pair {}/{} was not found",
                             baseCurrencyCode,
@@ -162,13 +159,7 @@ public class JdbcExchangeRateDao implements ExchangeRateDao {
                     throw new ObjectNotFoundException("Exchange rate not found");
                 }
 
-                ExchangeRate updatedExchangeRate = findByCurrencyCodes(
-                        connection,
-                        baseCurrencyCode,
-                        targetCurrencyCode
-                ).orElseThrow(() -> new SQLException("Updated exchange rate could not be read back"));
-
-                connection.commit();
+                ExchangeRate updatedExchangeRate = mapRow(resultSet);
                 LOGGER.debug(
                         "Updated exchange rate with ID {} for currency pair {}/{}",
                         updatedExchangeRate.getId(),
@@ -176,10 +167,6 @@ public class JdbcExchangeRateDao implements ExchangeRateDao {
                         targetCurrencyCode
                 );
                 return updatedExchangeRate;
-            } catch (SQLException | RuntimeException exception) {
-                rollback(connection, "exchange rate update for currency pair "
-                        + baseCurrencyCode + "/" + targetCurrencyCode);
-                throw exception;
             }
         } catch (SQLException exception) {
             LOGGER.error(
@@ -238,14 +225,6 @@ public class JdbcExchangeRateDao implements ExchangeRateDao {
                 }
                 return Optional.empty();
             }
-        }
-    }
-
-    private void rollback(Connection connection, String operation) {
-        try {
-            connection.rollback();
-        } catch (SQLException rollbackException) {
-            LOGGER.error("Failed to roll back {}", operation, rollbackException);
         }
     }
 
