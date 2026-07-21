@@ -102,7 +102,3 @@ mvn clean package
 5. Открой `http://localhost:8080/currency-exchange/`.
 
 `application.properties` содержит пароль от базы и намеренно исключён из Git.
-
-## Автор
-
-Илья Атрощенко — [GitHub](https://github.com/atroshchenkoi)
