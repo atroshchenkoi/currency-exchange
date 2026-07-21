@@ -1,136 +1,54 @@
-# Currency Exchange REST API
+# Currency Exchange Service
 
-Учебный REST API для хранения валют, обменных курсов и расчёта конвертации.
+REST API для работы с валютами и обменными курсами. Приложение позволяет хранить валюты и курсы, редактировать их и рассчитывать конвертацию.
 
-Проект запускается как WAR-приложение в Apache Tomcat и использует PostgreSQL.
+Проект создан как pet-проект для практики Java Backend: Servlet API, JDBC, SQL и многослойная архитектура.
 
-## Что нужно установить
+## Возможности
 
-- JDK 17 или новее;
-- Maven 3.9 или новее;
+- просмотр списка валют и поиск валюты по коду;
+- добавление валют;
+- просмотр, добавление, редактирование и удаление обменных курсов;
+- поиск курса по валютной паре;
+- конвертация суммы по прямому, обратному или кросс-курсу через USD;
+- валидация входных данных;
+- централизованная обработка ошибок с JSON-ответами;
+- простой web-интерфейс на HTML, CSS и JavaScript;
+- логирование работы приложения и доступа к базе данных.
+
+## Технологии
+
+- Java 17;
+- Jakarta Servlet API;
 - PostgreSQL;
-- Apache Tomcat 11.
+- JDBC и HikariCP;
+- Maven и сборка в WAR;
+- Apache Tomcat 11;
+- Jackson для JSON;
+- Lombok;
+- SLF4J Simple;
+- HTML, CSS и JavaScript без frontend-фреймворков.
 
-Проверить Java и Maven можно командами:
+## Архитектура
 
-```powershell
-java -version
-mvn -version
-```
-
-## Самое важное: как запустить базу данных
-
-База данных не хранится в GitHub как готовый файл. Вместо этого в репозитории лежат SQL-скрипты, которые создают одинаковую структуру и начальные данные:
-
-- [database/create_database.sql](database/create_database.sql) — создаёт пользователя и базу `currency_exchange`;
-- [src/main/resources/database/schema.sql](src/main/resources/database/schema.sql) — создаёт таблицы;
-- [src/main/resources/database/data.sql](src/main/resources/database/data.sql) — добавляет начальные валюты и курсы.
-
-Другому человеку достаточно установить PostgreSQL и выполнить эти три скрипта. Передавать свою локальную базу или пароль не нужно.
-
-### Вариант 1. Через PowerShell и `psql`
-
-1. Установи PostgreSQL и убедись, что его сервер запущен.
-
-2. Открой PowerShell в корне проекта.
-
-3. Укажи путь к `psql.exe`. Вместо `16` подставь установленную версию PostgreSQL:
-
-```powershell
-$psqlPath = "C:\Program Files\PostgreSQL\16\bin\psql.exe"
-```
-
-4. Открой [database/create_database.sql](database/create_database.sql), замени пароль `change_me` на свой и выполни скрипт. PostgreSQL попросит пароль администратора `postgres`:
-
-```powershell
-& $psqlPath -U postgres -d postgres -f database/create_database.sql
-```
-
-5. Создай таблицы:
-
-```powershell
-& $psqlPath -U currency_exchange_user -d currency_exchange -f src/main/resources/database/schema.sql
-```
-
-6. Добавь начальные данные:
-
-```powershell
-& $psqlPath -U currency_exchange_user -d currency_exchange -f src/main/resources/database/data.sql
-```
-
-После этих команд база готова. Скрипты рассчитаны на новую пустую базу; повторный запуск `schema.sql` или `data.sql` приведёт к ошибкам существующих таблиц или записей.
-
-### Вариант 2. Через pgAdmin
-
-1. Открой pgAdmin и подключись к локальному серверу PostgreSQL.
-2. Выбери базу `postgres`, открой **Query Tool** и выполни содержимое [database/create_database.sql](database/create_database.sql). Перед выполнением замени `change_me` на свой пароль.
-3. Обнови список баз, выбери созданную базу `currency_exchange` и снова открой **Query Tool**.
-4. Последовательно выполни содержимое `schema.sql`, а затем `data.sql`.
-
-## Настройка приложения
-
-1. Создай локальный файл конфигурации из примера:
-
-```powershell
-Copy-Item src/main/resources/application.properties.example src/main/resources/application.properties
-```
-
-2. В созданном файле `src/main/resources/application.properties` укажи тот же пароль, который записал в `create_database.sql`:
-
-```properties
-database.url=jdbc:postgresql://localhost:5432/currency_exchange
-database.username=currency_exchange_user
-database.password=your_password
-database.driver-class-name=org.postgresql.Driver
-database.pool.maximum-size=10
-```
-
-`application.properties` добавлен в `.gitignore`: его нельзя публиковать в GitHub, потому что там находится пароль от БД.
-
-## Сборка и запуск в Tomcat
-
-1. Собери WAR:
-
-```powershell
-mvn clean package
-```
-
-После успешной сборки появится файл:
+Приложение разделено на слои:
 
 ```text
-target/currency-exchange.war
+controller/  — сервлеты и HTTP-запросы
+service/     — бизнес-логика и расчёт обмена
+dao/         — JDBC-запросы к PostgreSQL
+entity/      — сущности, получаемые из базы данных
+dto/         — данные запросов и ответов API
+mapper/      — преобразование entity в DTO
+filter/      — кодировка и обработка исключений
+config/      — контекст приложения и пул соединений
 ```
 
-2. Укажи путь к Tomcat и скопируй WAR в папку `webapps`:
+Для расчёта конвертации последовательно применяются три стратегии:
 
-```powershell
-$tomcatPath = "D:\java_dev\apache-tomcat-11.0.24"
-Copy-Item target/currency-exchange.war "$tomcatPath\webapps\currency-exchange.war" -Force
-```
-
-3. Запусти Tomcat:
-
-```powershell
-& "$tomcatPath\bin\startup.bat"
-```
-
-4. Открой в браузере:
-
-```text
-http://localhost:8080/currency-exchange/
-```
-
-Проверить API можно по адресу:
-
-```text
-http://localhost:8080/currency-exchange/currencies
-```
-
-Остановить Tomcat:
-
-```powershell
-& "$tomcatPath\bin\shutdown.bat"
-```
+1. прямой курс `A → B`;
+2. обратный курс `B → A`;
+3. кросс-курс через USD: `USD → B / USD → A`.
 
 ## REST API
 
@@ -142,67 +60,49 @@ http://localhost:8080/currency-exchange/currencies
 }
 ```
 
-| Метод | URL | Назначение |
+### Валюты
+
+| Метод | Endpoint | Описание |
 | --- | --- | --- |
-| `GET` | `/currencies` | Получить все валюты |
-| `GET` | `/currency/{code}` | Получить валюту по коду, например `/currency/USD` |
-| `POST` | `/currencies` | Добавить валюту: `name`, `code`, `sign` |
-| `GET` | `/exchangeRates` | Получить все обменные курсы |
+| `GET` | `/currencies` | Получить список валют |
+| `GET` | `/currency/{code}` | Получить валюту по коду |
+| `POST` | `/currencies` | Добавить новую валюту |
+
+### Обменные курсы
+
+| Метод | Endpoint | Описание |
+| --- | --- | --- |
+| `GET` | `/exchangeRates` | Получить список курсов |
 | `GET` | `/exchangeRate/{pair}` | Получить курс, например `/exchangeRate/USDRUB` |
-| `POST` | `/exchangeRates` | Добавить курс: `baseCurrencyCode`, `targetCurrencyCode`, `rate` |
-| `PATCH` | `/exchangeRate/{pair}` | Обновить курс: `rate` |
+| `POST` | `/exchangeRates` | Добавить курс |
+| `PATCH` | `/exchangeRate/{pair}` | Обновить курс |
 | `DELETE` | `/exchangeRate/{pair}` | Удалить курс |
-| `GET` | `/exchange?from=USD&to=RUB&amount=10` | Рассчитать обмен |
 
-Данные для `POST` и `PATCH` передаются в формате `application/x-www-form-urlencoded`.
+### Конвертация
 
-При расчёте обмена используются три стратегии:
+| Метод | Endpoint | Описание |
+| --- | --- | --- |
+| `GET` | `/exchange?from=USD&to=RUB&amount=10` | Рассчитать обмен валюты |
 
-1. Прямой курс `A → B`.
-2. Обратный курс `B → A`.
-3. Кросс-курс через USD: `USD → B / USD → A`.
+Данные для `POST` и `PATCH` передаются как `application/x-www-form-urlencoded`. Готовые запросы для проверки находятся в [requests.http](requests.http).
 
-Сумма результата округляется до двух знаков после запятой.
+## Быстрый локальный запуск
 
-Для ручной проверки запросов используй [requests.http](requests.http) в IntelliJ IDEA или другом HTTP-клиенте.
+Нужны JDK 17+, Maven, PostgreSQL и Tomcat 11.
 
-## Использованные инструменты
+1. Создай базу и таблицы SQL-скриптами: [create_database.sql](database/create_database.sql), [schema.sql](src/main/resources/database/schema.sql), [data.sql](src/main/resources/database/data.sql).
+2. Скопируй `src/main/resources/application.properties.example` в `src/main/resources/application.properties` и укажи свои параметры PostgreSQL.
+3. Собери приложение:
 
-- Java 17;
-- Jakarta Servlet API;
-- Maven и сборка WAR;
-- Apache Tomcat 11;
-- PostgreSQL;
-- JDBC и HikariCP для пула соединений;
-- Jackson для JSON;
-- Lombok;
-- SLF4J Simple для логирования;
-- JUnit 5;
-- HTML, CSS и JavaScript без frontend-фреймворков.
-
-## Структура проекта
-
-```text
-src/main/java/com/example/currencyexchange/
-├── controller/  # Servlets
-├── service/     # Business logic
-├── dao/         # JDBC access to PostgreSQL
-├── entity/      # Database entities
-├── dto/         # Request and response objects
-├── filter/      # Encoding and exception handling
-└── config/      # Application context and connection pool
+```bash
+mvn clean package
 ```
 
-## Частые проблемы
+4. Скопируй `target/currency-exchange.war` в папку `webapps` Tomcat и запусти Tomcat.
+5. Открой `http://localhost:8080/currency-exchange/`.
 
-**`Connection refused` или `Database is unavailable`**
+`application.properties` содержит пароль от базы и намеренно исключён из Git.
 
-Проверь, что сервер PostgreSQL запущен, имя базы, пользователь и пароль в `application.properties` совпадают с созданными в PostgreSQL.
+## Автор
 
-**Tomcat отдаёт старую версию приложения**
-
-Останови Tomcat, скопируй свежий `target/currency-exchange.war` в `webapps` и запусти Tomcat снова.
-
-**`role "currency_exchange_user" does not exist`**
-
-Выполни [database/create_database.sql](database/create_database.sql) от имени пользователя `postgres`.
+Илья Атрощенко — [GitHub](https://github.com/atroshchenkoi)
